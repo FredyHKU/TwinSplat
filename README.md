@@ -101,8 +101,8 @@ When new scans cover only part of a room, naively updating with MonoGS corrupts 
 <td align="center"><b>Update with MonoGS</b></td>
 </tr>
 <tr>
-<td><img src="assets/rpd_upd_render_frame_0070.png" width="360"></td>
-<td><img src="assets/monogs_render_frame_0070.png" width="360"></td>
+<td><img src="assets/rpd_upd_render_frame_0070.png" width="330"></td>
+<td><img src="assets/monogs_render_frame_0070.png" width="330"></td>
 </tr>
 <tr>
 <td align="center"><sub>Static regions preserved, change integrated</sub></td>
@@ -122,8 +122,8 @@ In a real laboratory scan, rendering the baseline model from a novel viewpoint e
 <td align="center"><b>Baseline (no update)</b></td>
 </tr>
 <tr>
-<td><img src="assets/Rpd_update_GS.jpg" width="360"></td>
-<td><img src="assets/no_update_GS.jpg" width="360"></td>
+<td><img src="assets/Rpd_update_GS.jpg" width="300"></td>
+<td><img src="assets/no_update_GS.jpg" width="300"></td>
 </tr>
 </table>
 </div>
