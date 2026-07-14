@@ -31,7 +31,7 @@ Digital twins of indoor built environments must stay synchronized with the physi
 <div align="center">
 <img src="assets/flowchart.png" width="85%">
 <br>
-<em>The four-stage adaptive pipeline. Pose alignment → SSIM change detection and keyframe selection → parallel Gaussian contribution evaluation → adaptive point-cloud editing.</em>
+<sub>Pose alignment → SSIM change detection and keyframe selection → Gaussian contribution evaluation → adaptive point-cloud editing.</sub>
 </div>
 
 ---
@@ -48,7 +48,7 @@ Digital twins of indoor built environments must stay synchronized with the physi
 
 ## How It Works
 
-The core idea is simple. **Compare first, then edit only what changed.** For each incoming frame, TwinSplat renders the current 3DGS model at the tracked camera pose and compares it against the freshly captured image. A sliding-window **SSIM** detector marks the pixels that differ, and this change mask is traced back through the Gaussian rasterizer to find exactly which Gaussian primitives are responsible. Only those primitives are pruned and re-optimized with the new observation, while everything else stays frozen. This is what makes the update both fast and free of catastrophic forgetting.
+**Compare first, then edit only what changed.** Each incoming frame is rendered from the current model at the tracked pose and compared with the new capture. A sliding-window **SSIM** detector masks the pixels that differ, traces them back to the Gaussians responsible, and re-optimizes only those while leaving everything else frozen. That selectivity is what keeps each update cheap and free of catastrophic forgetting.
 
 <div align="center">
 <table>
@@ -63,23 +63,27 @@ The core idea is simple. **Compare first, then edit only what changed.** For eac
 <td><img src="assets/step3_updated.png" width="250"></td>
 </tr>
 </table>
-<em>One update step on a ReplicaCAD frame. The baseline model still renders the old potted plant (①). The SSIM detector flags exactly that region as changed (②, 6.45% of pixels, shown in blue). After editing only the responsible Gaussians, the updated model no longer shows the stale plant and reaches SSIM 0.881 against the new capture (③).</em>
+<sub>The baseline still renders the moved plant (①). SSIM flags that region (②, 6.45%). Editing only those Gaussians matches the new capture (③, SSIM 0.881).</sub>
 </div>
 
-The contribution evaluation and editing run inside the Gaussian rasterizer, so they inherit the same CUDA parallelization as standard 3DGS training and add little overhead. The change mask is passed into the backward pass to score how strongly each Gaussian influences the changed pixels, and only the high-scoring primitives are edited.
+<br>
+
+Contribution scoring and editing happen inside the Gaussian rasterizer, reusing the same CUDA backward pass as standard 3DGS training, so the added cost stays small.
 
 <div align="center">
 <img src="assets/cuda_gaussian.png" width="80%">
 <br>
-<em>Backend of the adaptive pipeline. Gaussians are splatted and rasterized in parallel into the rendered image, which is compared with the keyframe ground truth to form the reconstruction loss and the SSIM difference mask. The mask then drives a contribution evaluation that identifies which Gaussians to edit, all within CUDA.</em>
+<sub>The SSIM difference mask drives a per-Gaussian contribution score that selects which primitives to edit, all inside CUDA.</sub>
 </div>
 
-### The updating process across a sequence
+### Updating across a sequence
+
+Across a long capture, only the frames that actually change trigger an edit, so the moved plant, shelf, and bicycle are integrated region by region while the rest of the scene stays intact.
 
 <div align="center">
 <img src="assets/process_frames_1-130.png" width="90%">
 <br>
-<em>Incremental updating over frames 1–130. From top to bottom, the rows show the baseline model render, the detected change mask (blue) with its change ratio, the model after adaptive editing with per-frame SSIM, and the ground truth. Only the regions flagged in the change mask are touched, so relocated objects such as the potted plant, storage shelf, and bicycle are integrated while the rest of the scene is preserved.</em>
+<sub>Frames 1–130. Rows from top: baseline render, change mask, updated model, ground truth.</sub>
 </div>
 
 ---
@@ -101,8 +105,8 @@ When new scans cover only part of a room, naively updating with MonoGS corrupts 
 <td><img src="assets/monogs_render_frame_0070.png" width="360"></td>
 </tr>
 <tr>
-<td align="center"><em>Static regions preserved, change integrated</em></td>
-<td align="center"><em>Catastrophic forgetting and artifacts</em></td>
+<td align="center"><sub>Static regions preserved, change integrated</sub></td>
+<td align="center"><sub>Catastrophic forgetting and artifacts</sub></td>
 </tr>
 </table>
 </div>
